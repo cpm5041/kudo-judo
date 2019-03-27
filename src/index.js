@@ -1,6 +1,6 @@
 const express = require('express');
-const slack = require('slack');
-
+require('dotenv').config();
+const getMessages = require('./getMessages');
 const app = express();
 const port = process.env.PORT || 3000;
 app.get('/', (req, res) => {
