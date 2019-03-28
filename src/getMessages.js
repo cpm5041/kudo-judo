@@ -1,27 +1,41 @@
 const { WebClient } = require('@slack/client');
 
 const web = new WebClient(process.env.SLACK_TOKEN);
-console.log(process.env.SLACK_TOKEN);
-
-const obj = {
-  token: process.env.SLACK_TOKEN,
-  channel: 'CHDNY8J0M',
-};
 
 const getUserInfo = async (userId) => {
   const res = await web.users.info({
     token: process.env.SLACK_TOKEN,
     user: userId,
   });
-  return res.user;
+  return {
+    name: res.user.real_name,
+    image: res.user.profile.image_192,
+  };
+};
+
+const getKudosRecipient = async (message) => {
+  const userId = message.substr(message.indexOf('@') + 1, 9); // need to get userId from message.text
+  console.log('message', message);
+  console.log('user id', userId);
+  const recipient = await getUserInfo(userId);
+  return recipient;
 };
 
 const getKudosMessages = async (allMessages) => {
   const messagesWithUserInfo = allMessages
-  .map(async message => ({ text: message.text, user: await getUserInfo(message.user), ts: message.ts }));
+    .filter(message => message.text.includes('<#CHDNY8J0M|kudos>') && message.text.includes('@'))
+    .map(async (message) => {
+      const timestamp = new Date(parseInt(message.ts.split('.')[0], 10));
+      return {
+        text: message.text,
+        author: await getUserInfo(message.user),
+        timestamp,
+        recipient: await getKudosRecipient(message.text),
+      };
+    });
 
-  const foo = await Promise.all(messagesWithUserInfo);
-  return foo.filter(message => message.text.includes('<#CHDNY8J0M|kudos>'));
+  const parsedMessages = await Promise.all(messagesWithUserInfo);
+  return parsedMessages;
 };
 
 const messages = async () => {
