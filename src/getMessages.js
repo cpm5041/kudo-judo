@@ -16,9 +16,13 @@ const getUserInfo = async (userId) => {
   return res.user;
 };
 
-const getKudosMessages = allMessages => allMessages
-  .map(async message => ({ text: message.text, user: await getUserInfo(message.user), ts: message.ts }))
-  .filter(message => message.text.includes('<#CHDNY8J0M|kudos>'));
+const getKudosMessages = async (allMessages) => {
+  const messagesWithUserInfo = allMessages
+  .map(async message => ({ text: message.text, user: await getUserInfo(message.user), ts: message.ts }));
+
+  const foo = await Promise.all(messagesWithUserInfo);
+  return foo.filter(message => message.text.includes('<#CHDNY8J0M|kudos>'));
+};
 
 const messages = async () => {
   const res = await web.channels.history({
