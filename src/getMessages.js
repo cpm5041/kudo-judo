@@ -5,21 +5,18 @@ console.log(process.env.SLACK_TOKEN);
 
 const obj = {
   token: process.env.SLACK_TOKEN,
-  channel: 'C8Y9XS139',
+  channel: 'CHDNY8J0M',
 };
 
-const messages = (async () => {
-  // See: https://api.slack.com/methods/conversations.list
-  const res = await web.conversations.list({
-    exclude_archived: true,
-    types: 'public_channel',
-    // Only get first 100 items
-    limit: 100,
-  });
+const getKudosMessages = allMessages => allMessages.map(message => ({ text: message.text, user: message.user })).filter(message => message.text.includes('<#CHDNY8J0M|kudos>'));
 
-  // `res.channels` is an array of channel info objects
-  console.log(res.channels);
-})();
+const messages = async () => {
+  const res = await web.channels.history({
+    token: process.env.SLACK_TOKEN,
+    channel: 'CHDNY8J0M',
+  });
+  return getKudosMessages(res.messages);
+};
 
 module.exports = {
   messages,

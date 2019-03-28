@@ -6,8 +6,9 @@ const port = process.env.PORT || 3000;
 app.get('/', (req, res) => {
   res.status(200).send('Hello world!');
 });
-app.get('/messages', (req, res) => {
-  const messages = [];
+app.get('/messages', async (req, res) => {
+  const messages = await getMessages.messages();
+  console.log(messages);
   res.status(200).send(messages);
 });
 app.listen(port, () => {
