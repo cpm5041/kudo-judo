@@ -3,41 +3,50 @@ const { WebClient } = require('@slack/client');
 const web = new WebClient(process.env.SLACK_TOKEN);
 
 const userMap = {};
-
-const getUserInfo = async (userId) => {
-  const res = await web.users.info({
-    token: process.env.SLACK_TOKEN,
-    user: userId,
-  });
-  userMap[userId] = res.user.real_name;
-  return {
-    name: res.user.real_name,
-    image: res.user.profile.image_192,
-  };
-};
-
-const getKudosRecipient = async (message) => {
-  const userId = message.substr(message.indexOf('@') + 1, 9); // need to get userId from message.text
-  const recipient = await getUserInfo(userId);
-  return recipient;
-};
-
 const parseUserId = userId => userId.slice(2, userId.length - 1);
 
-const getProperMessage = (message) => {
-  const stringArray = message.split(' ');
+const getUserInfo = async (userId) => {
+  if (!userMap[userId]) {
+    const res = await web.users.info({
+      token: process.env.SLACK_TOKEN,
+      user: userId,
+    });
+    userMap[userId] = {
+      name: res.user.real_name,
+      image: res.user.profile.image_192,
+    };
+  }
+  return userMap[userId];
+};
+
+const replaceUserNames = message => message.map((phrase) => {
+  if (phrase.match(/<@[A-Z0-9]{0,9}>/)) {
+    const userId = parseUserId(phrase);
+    return userMap[userId].name;
+  }
+  return phrase;
+}).join(' ');
+
+const getUserInfoForKudosRecipients = async (message) => {
+  const stringArray = message.replace(/<#CHDNY8J0M\|kudos>/g, '#kudos').split(' ');
+  const userIds = [];
   for (let i = 0; i < stringArray.length; i++) {
     const phrase = stringArray[i];
 
     if (phrase.match(/<@[A-Z0-9]{0,9}>/)) {
       const userId = parseUserId(stringArray[i]);
-      if (!userMap[userId]) {
-        getUserInfo(userId);
-      }
-      stringArray[i] = userMap[userId];
+      userIds.push(userId);
     }
   }
-  return stringArray.join(' ').replace(/<#CHDNY8J0M\|kudos>/g, '#kudos');
+  const recipients = await Promise.all(userIds.map(async (userId) => {
+    const resolved = await getUserInfo(userId);
+    return resolved;
+  }));
+
+  return {
+    formattedKudos: replaceUserNames(stringArray),
+    recipients,
+  };
 };
 
 const getKudosMessages = async (allMessages) => {
@@ -45,12 +54,13 @@ const getKudosMessages = async (allMessages) => {
     .filter(message => message.text.includes('<#CHDNY8J0M|kudos>') && message.text.includes('@'))
     .map(async (message) => {
       const timestamp = new Date(parseInt(message.ts.split('.')[0], 10));
-      const userInfo = await getUserInfo(message.user);
+      const authorInfo = await getUserInfo(message.user);
+      const kudos = await getUserInfoForKudosRecipients(message.text);
       return {
-        text: getProperMessage(message.text),
-        author: userInfo,
+        text: kudos.formattedKudos,
+        author: authorInfo,
         timestamp,
-        recipient: await getKudosRecipient(message.text),
+        recipients: kudos.recipients,
       };
     });
 
