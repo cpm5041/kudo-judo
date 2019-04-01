@@ -37,7 +37,7 @@ const getProperMessage = (message) => {
       stringArray[i] = userMap[userId];
     }
   }
-  return stringArray.join(' ');
+  return stringArray.join(' ').replace(/<#CHDNY8J0M\|kudos>/g, '#kudos');
 };
 
 const getKudosMessages = async (allMessages) => {
