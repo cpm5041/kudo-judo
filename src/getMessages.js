@@ -28,7 +28,8 @@ const replaceUserNames = message => message.map((phrase) => {
 }).join(' ');
 
 const getUserInfoForKudosRecipients = async (message) => {
-  const stringArray = message.replace(/<#CHDNY8J0M\|kudos>/g, '#kudos').split(' ');
+  const regex = new RegExp(`<#${process.env.CHANNEL_ID}\\|kudos>`, 'g');
+  const stringArray = message.replace(regex, '#kudos').split(' ');
   const userIds = [];
   for (let i = 0; i < stringArray.length; i++) {
     const phrase = stringArray[i];
@@ -51,7 +52,7 @@ const getUserInfoForKudosRecipients = async (message) => {
 
 const getKudosMessages = async (allMessages) => {
   const messagesWithUserInfo = allMessages
-    .filter(message => message.text.includes('<#CHDNY8J0M|kudos>') && message.text.includes('@'))
+    .filter(message => message.text.includes(`<#${process.env.CHANNEL_ID}|kudos>`) && message.text.includes('@'))
     .map(async (message) => {
       const timestamp = new Date(parseInt(message.ts.split('.')[0], 10));
       const authorInfo = await getUserInfo(message.user);
@@ -72,7 +73,7 @@ const getKudosMessages = async (allMessages) => {
 const messages = async () => {
   const res = await web.channels.history({
     token: process.env.SLACK_TOKEN,
-    channel: 'CHDNY8J0M',
+    channel: process.env.CHANNEL_ID,
   });
   return getKudosMessages(res.messages);
 };
