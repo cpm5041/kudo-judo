@@ -28,7 +28,7 @@ const replaceUserNames = message => message.map((phrase) => {
 }).join(' ');
 
 const getUserInfoForKudosRecipients = async (message) => {
-  const regex = new RegExp(`<#${process.env.CHANNEL_ID}\\|kudos>`, 'g');
+  const regex = new RegExp(`<#${process.env.CHANNEL_ID}\\|${process.env.CHANNEL_NAME}>`, 'g');
   const stringArray = message.replace(regex, '#kudos').split(' ');
   const userIds = [];
   for (let i = 0; i < stringArray.length; i++) {
@@ -52,7 +52,7 @@ const getUserInfoForKudosRecipients = async (message) => {
 
 const getKudosMessages = async (allMessages) => {
   const messagesWithUserInfo = allMessages
-    .filter(message => message.text.includes(`<#${process.env.CHANNEL_ID}|kudos>`) && message.text.includes('@'))
+    .filter(message => message.text.includes(`<#${process.env.CHANNEL_ID}|${process.env.CHANNEL_NAME}>`) && message.text.includes('@'))
     .map(async (message) => {
       const timestamp = new Date(parseInt(message.ts.split('.')[0], 10));
       const authorInfo = await getUserInfo(message.user);
