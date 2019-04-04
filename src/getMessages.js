@@ -3,7 +3,7 @@ const { WebClient } = require('@slack/client');
 const web = new WebClient(process.env.SLACK_TOKEN);
 
 const userMap = {};
-const parseUserId = userId => userId.slice(2, userId.length - 1);
+const parseUserId = userId => userId.slice(userId.indexOf('@') + 1, userId.indexOf('>'));
 
 const getUserInfo = async (userId) => {
   if (!userMap[userId]) {
@@ -28,8 +28,10 @@ const replaceUserNames = message => message.map((phrase) => {
 }).join(' ');
 
 const getUserInfoForKudosRecipients = async (message) => {
-  const regex = new RegExp(`<#${process.env.CHANNEL_ID}\\|${process.env.CHANNEL_NAME}>`, 'g');
-  const stringArray = message.replace(regex, '#kudos').split(' ');
+  const kudosRegex = new RegExp(`<#${process.env.CHANNEL_ID}\\|${process.env.CHANNEL_NAME}>`, 'g');
+  const channelRegex = /<!channel>/;
+  const hereRegex = /<!here>/;
+  const stringArray = message.replace(kudosRegex, '#kudos').replace(channelRegex, '@channel').replace(hereRegex, '@here').split(' ');
   const userIds = [];
   for (let i = 0; i < stringArray.length; i++) {
     const phrase = stringArray[i];

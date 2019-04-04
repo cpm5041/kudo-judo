@@ -16,7 +16,6 @@ app.get('/', (req, res) => {
 });
 app.get('/messages', async (req, res) => {
   const messages = await getMessages.messages();
-  console.log(messages);
   res.status(200).send(messages);
 });
 app.listen(port, () => {
