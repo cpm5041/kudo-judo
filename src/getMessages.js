@@ -1,4 +1,6 @@
 const { WebClient } = require('@slack/client');
+const emoji = require('node-emoji');
+const uniq = require('lodash/uniq');
 
 const web = new WebClient(process.env.SLACK_TOKEN);
 
@@ -27,11 +29,23 @@ const replaceUserNames = message => message.map((phrase) => {
   return phrase;
 }).join(' ');
 
-const getUserInfoForKudosRecipients = async (message) => {
+const formatMessage = (message) => {
   const kudosRegex = new RegExp(`<#${process.env.CHANNEL_ID}\\|${process.env.CHANNEL_NAME}>`, 'g');
   const channelRegex = /<!channel>/;
   const hereRegex = /<!here>/;
-  const stringArray = message.replace(kudosRegex, '#kudos').replace(channelRegex, '@channel').replace(hereRegex, '@here').split(' ');
+  const emojiRegex = /:.+:/g;
+  const found = message.match(emojiRegex) || [];
+  let formattedMessage = message
+    .replace(kudosRegex, `#${process.env.CHANNEL_NAME}`)
+    .replace(channelRegex, '@channel')
+    .replace(hereRegex, '@here');
+  if (found.length > 0) {
+    formattedMessage = formattedMessage.replace(emojiRegex, emoji.get(found[0]));
+  }
+  return formattedMessage.split(' ');
+};
+
+const getUserInfoForKudosRecipients = async (stringArray) => {
   const userIds = [];
   for (let i = 0; i < stringArray.length; i++) {
     const phrase = stringArray[i];
@@ -41,10 +55,7 @@ const getUserInfoForKudosRecipients = async (message) => {
       userIds.push(userId);
     }
   }
-  const recipients = await Promise.all(userIds.map(async (userId) => {
-    const resolved = await getUserInfo(userId);
-    return resolved;
-  }));
+  const recipients = await Promise.all(uniq(userIds).map(async userId => getUserInfo(userId)));
 
   return {
     formattedKudos: replaceUserNames(stringArray),
@@ -58,7 +69,7 @@ const getKudosMessages = async (allMessages) => {
     .map(async (message) => {
       const timestamp = new Date(parseInt(message.ts.split('.')[0], 10));
       const authorInfo = await getUserInfo(message.user);
-      const kudos = await getUserInfoForKudosRecipients(message.text);
+      const kudos = await getUserInfoForKudosRecipients(formatMessage(message.text));
       return {
         text: kudos.formattedKudos,
         author: authorInfo,
@@ -67,8 +78,7 @@ const getKudosMessages = async (allMessages) => {
       };
     });
 
-  const parsedMessages = await Promise.all(messagesWithUserInfo);
-  return parsedMessages;
+  return Promise.all(messagesWithUserInfo);
 };
 
 
