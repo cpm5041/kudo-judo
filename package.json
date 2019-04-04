@@ -7,7 +7,7 @@
     "dev": "nodemon src/index.js",
     "lint": "eslint --ignore-path .gitignore --ignore-pattern node_modules . --ext .js",
     "start": "node src/index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"no test specified\""
   },
   "repository": {
     "type": "git",
