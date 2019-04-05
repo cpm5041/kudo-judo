@@ -8,7 +8,7 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 app.use(basicAuth({
-  users: { kudojudo: 'liberty1' },
+  users: { [process.env.SERVER_USERNAME]: process.env.SERVER_PASSWORD },
 }));
 
 app.use((req, res, next) => {
