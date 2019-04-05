@@ -64,17 +64,25 @@ const getUserInfoForKudosRecipients = async (stringArray) => {
 };
 
 const getKudosMessages = async (allMessages) => {
+  let reactionsWithEmojis;
   const messagesWithUserInfo = allMessages
     .filter(message => message.text.includes(`<#${process.env.CHANNEL_ID}|${process.env.CHANNEL_NAME}>`) && message.text.includes('@'))
     .map(async (message) => {
       const timestamp = new Date(parseInt(message.ts.split('.')[0], 10));
       const authorInfo = await getUserInfo(message.user);
       const kudos = await getUserInfoForKudosRecipients(formatMessage(message.text));
+      if (message.reactions) {
+        reactionsWithEmojis = message.reactions.map(reaction => ({
+          ...reaction,
+          emoji: emoji.get(reaction.name),
+        }));
+      }
       return {
         text: kudos.formattedKudos,
         author: authorInfo,
         timestamp,
         recipients: kudos.recipients,
+        reactions: reactionsWithEmojis,
       };
     });
 
