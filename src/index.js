@@ -1,18 +1,13 @@
 const express = require('express');
 const basicAuth = require('express-basic-auth');
+const cors = require('cors');
 require('dotenv').config();
 const getMessages = require('./getMessages');
 
 const app = express();
 const port = process.env.PORT || 3000;
 
-app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Credentials', true);
-  res.header('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, authorization');
-  next();
-});
+app.use(cors());
 
 app.use(basicAuth({
   users: { [process.env.SERVER_USERNAME]: process.env.SERVER_PASSWORD },
