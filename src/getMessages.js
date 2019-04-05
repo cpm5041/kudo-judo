@@ -26,6 +26,9 @@ const replaceUserNames = message => message.map((phrase) => {
     const userId = parseUserId(phrase);
     return userMap[userId].name;
   }
+  if (phrase.match(/^<!subteam/)) {
+    return phrase.substring(phrase.indexOf('|') + 1, phrase.indexOf('>'));
+  }
   return phrase;
 }).join(' ');
 
